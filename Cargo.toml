@@ -1,0 +1,13 @@
+[package]
+name = "mybox"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+fuels = "0.55.0"
+tokio = "1.36.0"
+dotenv = "0.15.0"
+axum = "0.7.5"
+serde = "1.0.202"
