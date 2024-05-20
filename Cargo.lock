@@ -1267,6 +1267,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "fuels-faucet"
+version = "0.1.0"
+dependencies = [
+ "axum 0.7.5",
+ "dotenv",
+ "fuels",
+ "serde",
+ "tokio",
+]
+
+[[package]]
 name = "fuels-macros"
 version = "0.55.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1963,17 +1974,6 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "mybox"
-version = "0.1.0"
-dependencies = [
- "axum 0.7.5",
- "dotenv",
- "fuels",
- "serde",
- "tokio",
 ]
 
 [[package]]
