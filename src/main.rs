@@ -8,16 +8,14 @@ use std::str::FromStr;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct TransferRes {
-    from: String,
-    to: String,
-    amount: u64,
-    asset_id: String,
+    success: bool,
     tx_id: String,
+    explorer_url: String,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct TransferPost {
-  receiver: String,
-  amount: u64,
+    address: String,
+    network: String,
 }
 
 #[warn(unused_must_use)]
@@ -28,7 +26,7 @@ async fn transfer(data: Json<TransferPost>) -> Json<TransferRes> {
 
     println!("data: {:#?}", data);
     let key = env::var("KEY").expect("KEY 未设置");
-    let provider = Provider::connect("beta-5.fuel.network").await.unwrap();
+    let provider = Provider::connect(&data.network).await.unwrap();
 
     // Setup a private key
     let secret = SecretKey::from_str(&key).unwrap();
@@ -45,42 +43,62 @@ async fn transfer(data: Json<TransferPost>) -> Json<TransferRes> {
     println!("balance: {}, asset_id: {} ", balance, asset_id);
 
     // const NUM_ASSETS: u64 = 0;
-    let amount: u64 = data.amount;
+    let amount: u64 = 1000000;
+    // let amount: u64 = 10000000000;
+
     // const NUM_COINS: u64 = 1;
     // let (coins, _) = setup_multiple_assets_coins(wallet.address(), NUM_ASSETS, NUM_COINS, AMOUNT);
 
-    let receiver =
-        Bech32Address::from_str(&data.receiver)
-            .unwrap();
+    let receiver = Bech32Address::from_str(&data.address).unwrap();
 
-    let (_tx_id, _receipts) = wallet
+    // let (_tx_id, _receipts) = wallet
+    //     .transfer(&receiver, amount, asset_id, TxPolicies::default())
+    //     .await
+    //     .unwrap();
+
+    let result = wallet
         .transfer(&receiver, amount, asset_id, TxPolicies::default())
-        .await
-        .unwrap();
+        .await;
 
-    println!("_tx_id: {}, _receipts: {:#?} ", _tx_id, _receipts);
-
-    Json(TransferRes {
-        from: wallet.address().to_string(),
-        to: receiver.to_string(),
-        amount: amount,
-        asset_id: asset_id.to_string(),
-        tx_id: _tx_id.to_string(),
-    })
+    match result {
+        Ok((_tx_id, _receipts)) => {
+            // 处理成功的结果
+            println!("Transaction successful: {:?}", _tx_id);
+            Json(TransferRes {
+                success: true,
+                tx_id: _tx_id.to_string(),
+                explorer_url: explorer_url(&_tx_id.to_string()),
+            })
+        }
+        Err(e) => {
+            // 处理错误
+            eprintln!("Transaction failed: {:?}", e);
+            Json(TransferRes {
+                success: false,
+                tx_id: String::new(),
+                explorer_url: String::new(),
+            })
+        }
+    }
 }
 
+fn explorer_url(tx_id: &str) -> String {
+    let base_url = "https://app.fuel.network/tx/0x";
+    let path = "/simple";
+    format!("{}{}{}", base_url, tx_id, path)
+}
 #[tokio::main]
 async fn main() {
     // 加载 .env 文件
     dotenv().ok();
 
-    // setup().await;
-
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
-        .route("/transfer", post(transfer));
+        .route("/fuel/request", post(transfer));
 
     // run it with hyper on localhost:3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+        .await
+        .unwrap();
     axum::serve(listener, app).await.unwrap();
 }
