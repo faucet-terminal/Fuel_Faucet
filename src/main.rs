@@ -2,6 +2,7 @@ use axum::{extract::Json, routing::get, routing::post, Router};
 use dotenv::dotenv;
 use fuels::accounts::wallet::Wallet;
 use fuels::{crypto::SecretKey, prelude::*};
+use reqwest::Error;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::str::FromStr;
@@ -16,6 +17,13 @@ struct TransferRes {
 struct TransferPost {
     address: String,
     network: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+struct Setting {
+    amount: String,
+    frequency: String,
+    alarm: String,
+    chain_type: String,
 }
 
 #[warn(unused_must_use)]
@@ -37,13 +45,20 @@ async fn transfer(data: Json<TransferPost>) -> Json<TransferRes> {
     // Get the wallet address. Used later with the faucet
     println!("{}", wallet.address().to_string());
 
+   
+    let url = env::var("SETTING_URL").expect("SETTING_URL 未设置");
+    let response = reqwest::get(&url).await.unwrap();
+
+    let setting: Setting = response.json().await.unwrap();
+    println!("setting: {:#?}", setting);
+
     let asset_id: AssetId = BASE_ASSET_ID;
     let balance: u64 = wallet.get_asset_balance(&asset_id).await.unwrap();
 
     println!("balance: {}, asset_id: {} ", balance, asset_id);
 
     // const NUM_ASSETS: u64 = 0;
-    let amount: u64 = 1000000;
+    let amount: u64 = setting.amount.to_owned().parse().unwrap();
     // let amount: u64 = 10000000000;
 
     // const NUM_COINS: u64 = 1;
@@ -87,6 +102,7 @@ fn explorer_url(tx_id: &str) -> String {
     let path = "/simple";
     format!("{}{}{}", base_url, tx_id, path)
 }
+
 #[tokio::main]
 async fn main() {
     // 加载 .env 文件
