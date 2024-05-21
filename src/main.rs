@@ -113,7 +113,7 @@ async fn main() {
         .route("/fuel/request", post(transfer));
 
     // run it with hyper on localhost:3000
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:6004")
         .await
         .unwrap();
     axum::serve(listener, app).await.unwrap();
