@@ -113,7 +113,7 @@ async fn main() {
         .route("/fuel/request", post(transfer));
 
     let port = env::var("PORT").unwrap_or_else(|_| "6004".to_string());
-    let addr = format!("127.0.0.1:{}", port);
+    let addr = format!("0.0.0.0:{}", port);
     // run it with hyper on localhost:3000
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
