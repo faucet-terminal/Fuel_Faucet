@@ -17,6 +17,7 @@ struct TransferRes {
 struct TransferPost {
     address: String,
     network: String,
+    amount: String,
 }
 #[derive(Debug, Serialize, Deserialize)]
 struct Setting {
@@ -57,7 +58,7 @@ async fn transfer(data: Json<TransferPost>) -> Json<TransferRes> {
     println!("balance: {}, asset_id: {} ", balance, asset_id);
 
     // const NUM_ASSETS: u64 = 0;
-    let amount: u64 = setting.amount.to_owned().parse().unwrap();
+    let amount: u64 = data.amount.to_owned().parse().unwrap();
     // let amount: u64 = 10000000000;
 
     // const NUM_COINS: u64 = 1;
