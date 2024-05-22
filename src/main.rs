@@ -45,7 +45,6 @@ async fn transfer(data: Json<TransferPost>) -> Json<TransferRes> {
     // Get the wallet address. Used later with the faucet
     println!("{}", wallet.address().to_string());
 
-   
     let url = env::var("SETTING_URL").expect("SETTING_URL 未设置");
     let response = reqwest::get(&url).await.unwrap();
 
@@ -112,9 +111,9 @@ async fn main() {
         .route("/", get(|| async { "Hello, World!" }))
         .route("/fuel/request", post(transfer));
 
+    let port = env::var("PORT").unwrap_or_else(|_| "6004".to_string());
+    let addr = format!("127.0.0.1:{}", port);
     // run it with hyper on localhost:3000
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:6004")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
