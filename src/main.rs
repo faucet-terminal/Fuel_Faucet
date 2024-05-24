@@ -107,22 +107,6 @@ async fn transfer(data: Json<TransferPost>) -> StdResult<Json<TransferRes>, Tran
         explorer_url: explorer_url(&_tx_id.to_string()),
     }))
 
-    // match result {
-    //     Ok((_tx_id, _receipts)) => {
-    //         // 处理成功的结果
-    //         println!("Transaction successful: {:?}", _tx_id);
-    //         Ok(Json(TransferRes {
-    //             success: true,
-    //             tx_id: _tx_id.to_string(),
-    //             explorer_url: explorer_url(&_tx_id.to_string()),
-    //         }))
-    //     }
-    //     Err(e) => {
-    //         // 处理错误
-    //         eprintln!("Transaction failed: {:?}", e);
-    //         Err(TransferError::TransactionError(e.to_string()))
-    //     }
-    // }
 }
 
 fn explorer_url(tx_id: &str) -> String {
