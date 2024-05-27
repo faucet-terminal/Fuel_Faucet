@@ -14,6 +14,8 @@ serde = "1.0.202"
 reqwest = { version = "0.11", features = ["json"] }
 openssl = { version = "0.10.64", features = ["vendored"] } 
 thiserror = "1.0.40"
+rust_decimal = "1.20"
+rust_decimal_macros = "1.20"
 
 [source.crates-io]
 registry = "https://mirrors.ustc.edu.cn/crates.io-index"

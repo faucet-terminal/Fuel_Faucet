@@ -3,11 +3,11 @@ use axum::response::Json as AxumJson;
 use axum::{extract::Json, response::IntoResponse, routing::get, routing::post, Router};
 use dotenv::dotenv;
 use fuels::{crypto::SecretKey, prelude::*};
+use rust_decimal::prelude::{FromStr, ToPrimitive};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::env;
-use std::num::ParseIntError;
 use std::result::Result as StdResult;
-use std::str::FromStr;
 use thiserror::Error;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -85,17 +85,27 @@ async fn transfer(data: Json<TransferPost>) -> StdResult<Json<TransferRes>, Tran
 
     println!("balance: {}, asset_id: {} ", balance, asset_id);
 
-    let amount: u64 = data
-        .amount
-        .to_owned()
-        .parse()
-        .map_err(|err: ParseIntError| TransferError::InvalidAmountFormat(err.to_string()))?;
+    let amount_str = &data.amount;
+    let precision: u32 = 9;
+
+    // Parse the amount as Decimal
+    let amount: Decimal = Decimal::from_str(amount_str).unwrap();
+
+    // Create the multiplier
+    let multiplier = Decimal::new(10u64.pow(precision).try_into().unwrap(), 0);
+
+    // Perform the multiplication
+    let result = amount * multiplier;
+
+    // Convert to u64 if needed
+    let smallest_unit_int = result.to_u64().ok_or_else(|| TransferError::InvalidAmountFormat("Failed to convert to integer".to_string()))?;
+    println!("Amount in smallest unit: {}", smallest_unit_int);
 
     let receiver = Bech32Address::from_str(&data.address)
         .map_err(|err| TransferError::InvalidReceiverAddress(err.to_string()))?;
     // Send the transaction
     let (_tx_id, _receipts) = wallet
-        .transfer(&receiver, amount, asset_id, TxPolicies::default())
+        .transfer(&receiver, smallest_unit_int, asset_id, TxPolicies::default())
         .await
         .map_err(|err: Error| TransferError::TransactionError(err.to_string()))?;
 
@@ -106,7 +116,6 @@ async fn transfer(data: Json<TransferPost>) -> StdResult<Json<TransferRes>, Tran
         tx_id: _tx_id.to_string(),
         explorer_url: explorer_url(&_tx_id.to_string()),
     }))
-
 }
 
 fn explorer_url(tx_id: &str) -> String {
@@ -114,12 +123,10 @@ fn explorer_url(tx_id: &str) -> String {
     let path = "/simple";
     format!("{}{}{}", base_url, tx_id, path)
 }
-
 #[tokio::main]
 async fn main() {
     // 加载 .env 文件
     dotenv().ok();
-
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/fuel/request", post(transfer));
